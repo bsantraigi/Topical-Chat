@@ -17,7 +17,11 @@ def get_wiki_text(key, wiki_id, wikidata):
 def get_text_from_thread_id(reddit_thread_id, prawler, reddit_id_to_text_mapping):
 
     if reddit_thread_id not in reddit_id_to_text_mapping.keys():
-        reddit_id_to_text_mapping[reddit_thread_id] = prawler.get(reddit_thread_id)
+        try:
+            reddit_id_to_text_mapping[reddit_thread_id] = prawler.get(reddit_thread_id)
+        except Exception as e:
+            print(reddit_thread_id)
+            print(e)
 
     return reddit_id_to_text_mapping[reddit_thread_id]
 
@@ -54,6 +58,11 @@ def create_post_built_reading_set_file(input_directory, output_directory, filena
 
     with open(os.path.join(input_directory, filename), 'r') as reading_set_input_file:
         reading_set = json.load(reading_set_input_file)
+
+    of = os.path.join(output_directory, filename)
+    if os.path.exists(of):
+        print(f"skipping, output file exists: {of}")
+        return
 
     with open(os.path.join(output_directory, filename), 'w') as reading_set_output_file:
         for key in tqdm(reading_set.keys()):
@@ -127,6 +136,9 @@ def main():
     wikidata = WikiData()
     for filename in os.listdir(reading_set_pre_build_directory):
         print("Begin processing file:", filename)
+        # if filename in ["test_rare.json", "valid_rare.json"]:
+        #    print(f"Skipping {filename}")
+        # continue
         create_post_built_reading_set_file(reading_set_pre_build_directory, reading_set_post_build_directory, filename,
                                            reddit_id_to_text_mapping, article_url_to_content_mapping, prawler,
                                            wapo_retriever, wikidata)
